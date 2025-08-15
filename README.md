@@ -10,7 +10,7 @@ git clone https://github.com/inmanturbo/shell
 
 Add to path
 
-zsh:
+zsh
 
 ```zsh
 echo 'export PATH=$PATH:/home/$USER/shell' | tee -a ~/.zshrc

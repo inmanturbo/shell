@@ -11,15 +11,60 @@ prod_ini="$CONF_DIR/10-opcache-prod.ini"
 active_ini="$CONF_DIR/10-opcache.ini"
 
 usage() {
-  echo "Usage: $(basename "$0") [dev|prod|status]"
+  echo "Usage: $(basename "$0") [install|dev|prod|status]"
+  echo "  install  Create dev/prod OPcache configs for current PHP version"
+  echo "  dev      Switch to development-friendly OPcache settings"
+  echo "  prod     Switch to production OPcache settings"
+  echo "  status   Show current OPcache settings"
   exit 1
 }
 
-if [[ $# -eq 0 ]]; then
-  usage
-fi
+install_configs() {
+  echo "Installing OPcache configs for PHP $PHPV..."
+
+  sudo tee "$dev_ini" >/dev/null <<'INI'
+zend_extension=opcache
+
+; Dev-friendly: auto-picks up file changes
+opcache.enable=1
+opcache.enable_cli=1
+opcache.memory_consumption=256
+opcache.interned_strings_buffer=16
+opcache.max_accelerated_files=20000
+opcache.validate_timestamps=1
+opcache.revalidate_freq=2
+opcache.save_comments=1
+opcache.fast_shutdown=1
+opcache.jit=0
+opcache.jit_buffer_size=0
+INI
+
+  sudo tee "$prod_ini" >/dev/null <<'INI'
+zend_extension=opcache
+
+; Max performance: don't check timestamps
+opcache.enable=1
+opcache.enable_cli=1
+opcache.memory_consumption=256
+opcache.interned_strings_buffer=16
+opcache.max_accelerated_files=40000
+opcache.validate_timestamps=0
+opcache.revalidate_freq=0
+opcache.save_comments=1
+opcache.fast_shutdown=1
+opcache.jit=0
+opcache.jit_buffer_size=0
+INI
+
+  sudo ln -sf "$dev_ini" "$active_ini"
+  echo "OPcache configs installed. Active mode: DEV"
+  sudo systemctl restart "php$PHPV-fpm"
+}
 
 case "$1" in
+  install)
+    install_configs
+    ;;
   dev)
     sudo ln -sf "$dev_ini" "$active_ini"
     echo "Switched OPcache to DEV settings."

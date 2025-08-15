@@ -11,18 +11,32 @@ prod_ini="$CONF_DIR/10-opcache-prod.ini"
 active_ini="$CONF_DIR/10-opcache.ini"
 
 usage() {
-  echo "Usage: $(basename "$0") [install|dev|prod|status]"
-  echo "  install  Create dev/prod OPcache configs for current PHP version"
-  echo "  dev      Switch to development-friendly OPcache settings"
-  echo "  prod     Switch to production OPcache settings"
-  echo "  status   Show current OPcache settings"
+  echo "Usage: $(basename "$0") [install [--force]|dev|prod|status]"
+  echo "  install       Create dev/prod OPcache configs for current PHP version"
+  echo "  install --force  Overwrite existing dev/prod configs"
+  echo "  dev           Switch to development-friendly OPcache settings"
+  echo "  prod          Switch to production OPcache settings"
+  echo "  status        Show current OPcache settings"
   exit 1
+}
+
+write_ini_file() {
+  local file="$1"
+  local content="$2"
+
+  if [[ -f "$file" && "$FORCE" != "1" ]]; then
+    echo "Skipped existing: $file"
+  else
+    echo "Creating: $file"
+    echo "$content" | sudo tee "$file" >/dev/null
+  fi
 }
 
 install_configs() {
   echo "Installing OPcache configs for PHP $PHPV..."
 
-  sudo tee "$dev_ini" >/dev/null <<'INI'
+  # dev config
+  write_ini_file "$dev_ini" "$(cat <<'INI'
 zend_extension=opcache
 
 ; Dev-friendly: auto-picks up file changes
@@ -38,8 +52,10 @@ opcache.fast_shutdown=1
 opcache.jit=0
 opcache.jit_buffer_size=0
 INI
+)"
 
-  sudo tee "$prod_ini" >/dev/null <<'INI'
+  # prod config
+  write_ini_file "$prod_ini" "$(cat <<'INI'
 zend_extension=opcache
 
 ; Max performance: don't check timestamps
@@ -55,14 +71,25 @@ opcache.fast_shutdown=1
 opcache.jit=0
 opcache.jit_buffer_size=0
 INI
+)"
 
-  sudo ln -sf "$dev_ini" "$active_ini"
-  echo "OPcache configs installed. Active mode: DEV"
+  # If active symlink doesn't exist, point to dev
+  if [[ ! -L "$active_ini" ]]; then
+    sudo ln -sf "$dev_ini" "$active_ini"
+    echo "Linked $active_ini to $dev_ini"
+  fi
+
   sudo systemctl restart "php$PHPV-fpm"
+  echo "OPcache configs installed. Active mode: DEV"
 }
 
 case "$1" in
   install)
+    FORCE=0
+    if [[ "$2" == "--force" ]]; then
+      FORCE=1
+      echo "Force overwrite enabled."
+    fi
     install_configs
     ;;
   dev)

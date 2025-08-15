@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Toggle or check OPcache mode for Laravel Valet (Linux)
+
+set -e
+
+PHPV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
+CONF_DIR="/etc/php/$PHPV/fpm/conf.d"
+
+dev_ini="$CONF_DIR/10-opcache-dev.ini"
+prod_ini="$CONF_DIR/10-opcache-prod.ini"
+active_ini="$CONF_DIR/10-opcache.ini"
+
+usage() {
+  echo "Usage: $(basename "$0") [dev|prod|status]"
+  exit 1
+}
+
+if [[ $# -eq 0 ]]; then
+  usage
+fi
+
+case "$1" in
+  dev)
+    sudo ln -sf "$dev_ini" "$active_ini"
+    echo "Switched OPcache to DEV settings."
+    ;;
+  prod)
+    sudo ln -sf "$prod_ini" "$active_ini"
+    echo "Switched OPcache to PROD settings."
+    ;;
+  status)
+    echo "PHP $PHPV OPcache status:"
+    php -i | grep -iE 'opcache.enable|validate_timestamps|revalidate_freq|jit'
+    exit 0
+    ;;
+  *)
+    usage
+    ;;
+esac
+
+# Clear Laravel caches if artisan exists
+if [[ -f artisan ]]; then
+  echo "Clearing Laravel caches..."
+  php artisan optimize:clear >/dev/null 2>&1 || true
+fi
+
+# Reload PHP-FPM
+sudo systemctl reload "php$PHPV-fpm" || sudo systemctl restart "php$PHPV-fpm"
+echo "PHP-FPM reloaded."

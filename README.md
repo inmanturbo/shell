@@ -67,14 +67,14 @@ This will:
 
 #### Dev Mode
 
-- opcache.validate_timestamps=1
-- opcache.revalidate_freq=2
+- `opcache.validate_timestamps=1`
+- `opcache.revalidate_freq=2`
 
 Ensures code changes are reflected without manually clearing OPcache.
 
 Prod Mode
 
-- opcache.validate_timestamps=0
-- opcache.revalidate_freq=0
+- `opcache.validate_timestamps=0`
+- `opcache.revalidate_freq=0`
 
 Maximizes performance by not checking file modification times.

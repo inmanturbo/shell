@@ -20,6 +20,19 @@ bash
 ```bash
 echo 'export PATH=$PATH:/home/$USER/shell' | tee -a ~/.bashrc
 ```
+
+Make all scripts in the ~/shell folder executable
+
+```bash
+find ~/shell -type f ! -name "*.*" -exec chmod +x {} \;
+```
+
+Reload your shell
+
+```bash
+exec "$SHELL"
+```
+
 ---
 
 ### Shell Programs (scripts)

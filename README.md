@@ -13,12 +13,12 @@ Add to path
 zsh
 
 ```zsh
-echo 'export PATH=$PATH:/home/$USER/shell' | tee -a ~/.zshrc
+grep -qxF 'export PATH="$PATH:$HOME/shell"' ~/.zshrc || echo 'export PATH="$PATH:$HOME/shell"' >> ~/.zshrc
 ```
 
 bash
 ```bash
-echo 'export PATH=$PATH:/home/$USER/shell' | tee -a ~/.bashrc
+grep -qxF 'export PATH="$PATH:$HOME/shell"' ~/.bashrc || echo 'export PATH="$PATH:$HOME/shell"' >> ~/.bashrc
 ```
 
 Make all scripts in the ~/shell folder executable

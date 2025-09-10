@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# vgrep: search only Laravel Valet-linked project paths for a pattern.
+# Usage:
+#   vgrep [-i] [-a] "pattern" [project-filter]
+#   -i: case-insensitive
+#   -a: search all files (default: only *.php and *.blade.php)
+
+usage() {
+  echo "usage: vgrep [-i] [-a] \"pattern\" [project-filter]" >&2
+  exit 2
+}
+
+ignore_case=0
+all_files=0
+
+while getopts ":ia" opt; do
+  case "$opt" in
+    i) ignore_case=1 ;;
+    a) all_files=1 ;;
+    *) usage ;;
+  esac
+done
+shift $((OPTIND-1))
+
+pattern="${1:-}"
+filter="${2:-}"
+[[ -z "$pattern" ]] && usage
+
+# Emit Valet project paths by parsing `valet links` table output.
+valet_projects() {
+  if ! command -v valet >/dev/null 2>&1; then
+    echo "valet not found in PATH" >&2
+    return 127
+  fi
+
+  # Parse the | delimited table and extract the Path column robustly.
+  valet links | awk -F'|' '
+    /^\+/ { next }             # skip border lines
+    NR==1 { next }             # skip first line (border)
+    NR==2 {                    # header row -> find "Path" column index
+      for (i=1;i<=NF;i++) {
+        gsub(/^[ \t]+|[ \t]+$/, "", $i)
+        if ($i=="Path") pc=i
+      }
+      next
+    }
+    pc {
+      p=$pc
+      gsub(/^[ \t]+|[ \t]+$/, "", p)
+      if (p!="") print p
+    }
+  '
+}
+
+projects="$(valet_projects)"
+[[ -n "$filter" ]] && projects="$(printf '%s\n' "$projects" | grep -i -- "$filter" || true)"
+
+# Common include/exclude patterns
+rg_excludes=(-g '!vendor/**' -g '!node_modules/**' -g '!storage/**' -g '!public/**' -g '!bootstrap/cache/**' -g '!.git/**' -g '!*.min.*')
+rg_includes_php=(-g '*.php' -g '*.blade.php')
+grep_excludes=(--exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=storage --exclude-dir=public --exclude-dir=bootstrap --exclude-dir=.git --exclude='*.min.*')
+grep_includes_php=(--include='*.php' --include='*.blade.php')
+
+if command -v rg >/dev/null 2>&1; then
+  # ripgrep path
+  while IFS= read -r proj; do
+    [[ -z "$proj" ]] && continue
+    if (( all_files )); then
+      args=("${rg_excludes[@]}")
+    else
+      args=("${rg_excludes[@]}" "${rg_includes_php[@]}")
+    fi
+    (( ignore_case )) && args=(-i "${args[@]}")
+    # --no-messages to suppress unreadable-dir messages; -n for line numbers
+    if rg -n --no-messages "${args[@]}" -- "$pattern" "$proj"; then
+      echo "✅ $proj"
+    fi
+  done <<< "$projects"
+else
+  # grep fallback
+  while IFS= read -r proj; do
+    [[ -z "$proj" ]] && continue
+    if (( all_files )); then
+      args=("${grep_excludes[@]}")
+    else
+      args=("${grep_excludes[@]}" "${grep_includes_php[@]}")
+    fi
+    (( ignore_case )) && args=(-i "${args[@]}")
+    if grep -R -n --color=auto "${args[@]}" -- "$pattern" "$proj"; then
+      echo "✅ $proj"
+    fi
+  done <<< "$projects"
+fi

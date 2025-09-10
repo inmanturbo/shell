@@ -38,6 +38,9 @@ exec "$SHELL"
 ### Shell Programs (scripts)
 
 - [valet-opcache](#valet-opcache)
+- [vgrep](#vgrep)
+- [vclassdef](#vclassdef)
+- [vclassuse](#vclassuse)
 
 ---
 
@@ -91,3 +94,26 @@ Prod Mode
 - `opcache.revalidate_freq=0`
 
 Maximizes performance by not checking file modification times.
+
+### vgrep
+Search only **Valet-linked** project paths for a pattern.
+
+```bash
+vgrep 'App\\Models\\User'          # search PHP/Blade in all Valet projects
+vgrep -i 'class Team' jetstream    # case-insensitive; only projects with "jetstream" in path
+vgrep -a 'window.Alpine'           # search all files (not just PHP/Blade)
+```
+
+### vclassdef
+Find a class definition by name.
+
+```bash
+vclassdef Team
+```
+
+### vclassuse
+Find usages of a fully-qualified class name (escape backslashes).
+
+```bash
+vclassuse 'App\\Models\\User'
+```

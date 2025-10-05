@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# i3-split-code: Opens VS Code and Chrome side by side in tabbed containers
+
+set -e
+
+path="${1:-.}"
+
+# Get the current window ID (the terminal)
+TERMINAL_ID=$(xdotool getactivewindow)
+
+# Open VS Code in the specified path
+i3-msg "exec code $path"
+sleep 1.5
+
+# Split horizontally for side-by-side layout
+i3-msg "split h"
+
+# Open browser in new window on the right
+i3-msg "exec google-chrome --new-window https://google.com"
+sleep 0.5
+
+# Focus left window and convert to container (mod+v) then tabs (mod+w)
+i3-msg "focus left"
+sleep 0.1
+i3-msg "split v"
+sleep 0.1
+i3-msg "layout tabbed"
+sleep 0.1
+
+# Focus right window and convert to container (mod+v) then tabs (mod+w)
+i3-msg "focus right"
+sleep 0.1
+i3-msg "split v"
+sleep 0.1
+i3-msg "layout tabbed"
+sleep 0.1
+
+# Focus back to left
+i3-msg "focus left"
+
+sleep 1
+
+# Kill the terminal by its window ID
+xdotool windowkill $TERMINAL_ID

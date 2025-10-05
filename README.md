@@ -38,6 +38,7 @@ exec "$SHELL"
 ### Shell Programs (scripts)
 
 - [i3-split-tabs](#i3-split-tabs)
+- [i3-split-code](#i3-split-code)
 - [valet-opcache](#valet-opcache)
 - [vgrep](#vgrep)
 - [vclassdef](#vclassdef)
@@ -56,6 +57,24 @@ i3-split-tabs
 
 This will:
 1. Open Nautilus file manager in your home directory
+2. Split horizontally for side-by-side layout
+3. Open Chrome with google.com in a new window
+4. Convert both windows to tabbed containers (split v + layout tabbed)
+5. Focus returns to the left container
+
+---
+
+### i3-split-code
+
+Opens VS Code and Chrome browser side by side in tabbed containers.
+
+#### Usage
+```bash
+i3-split-code [path]    # Opens VS Code in the specified path (defaults to current directory)
+```
+
+This will:
+1. Open VS Code in the specified path (or current directory if no path provided)
 2. Split horizontally for side-by-side layout
 3. Open Chrome with google.com in a new window
 4. Convert both windows to tabbed containers (split v + layout tabbed)

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# i3-split-tabs: Opens nautilus and chrome side by side in tabbed containers
+
+set -e
+
+# Open file manager in home directory
+i3-msg "exec nautilus ~"
+sleep 0.5
+
+# Split horizontally for side-by-side layout
+i3-msg "split h"
+
+# Open browser in new window on the right
+i3-msg "exec google-chrome --new-window https://google.com"
+sleep 0.5
+
+# Focus left window and convert to container (mod+v) then tabs (mod+w)
+i3-msg "focus left"
+sleep 0.1
+i3-msg "split v"
+sleep 0.1
+i3-msg "layout tabbed"
+sleep 0.1
+
+# Focus right window and convert to container (mod+v) then tabs (mod+w)
+i3-msg "focus right"
+sleep 0.1
+i3-msg "split v"
+sleep 0.1
+i3-msg "layout tabbed"
+sleep 0.1
+
+# Focus back to left
+i3-msg "focus left"
